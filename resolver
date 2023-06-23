@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+import re
+from sys import argv
+from subprocess import run
+
+if len(argv) < 2:
+    print("""Usage:
+    sub-resolver <subdomains-file>""")
+    exit()
+
+
+file = open("ips.txt", "w")
+
+subdomains_file = open(argv[1], "r")
+subdomains = subdomains_file.readlines()
+
+for subdomain in subdomains:
+    subdomain = subdomain.strip("\n")
+    file.write(run(["nslookup", subdomain],
+               capture_output=True, text=True).stdout)
+file.close()
+
+file = open("ips.txt", "r")
+text = file.read()
+resolvers_file = open("resolvers.txt", "r")
+resolvers = resolvers_file.readlines()
+
+ips = re.findall(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", text)
+
+for ip in ips:
+    if ip not in resolvers:
+        print(ip)
+
+run(["rm", "ips.txt"])
+file.close()
+resolvers_file.close()
+subdomains_file.close()
